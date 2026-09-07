@@ -34,7 +34,7 @@ and this project adheres to
   and document the cmake option to override 'NetCDF_FIND_STRATEGIES' as
   requested in [#500](https://github.com/pdidev/pdi/issues/500)
 * Added new checkpointing plugin using the [VeloC library](https://veloc.readthedocs.io/en/latest/userguide.html)
-as requested in [#726](https://github.com/pdidev/pdi/issues/726)
+  as requested in [#726](https://github.com/pdidev/pdi/issues/726)
 
 #### Changed
 
