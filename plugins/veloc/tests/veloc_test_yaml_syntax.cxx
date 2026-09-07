@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  ******************************************************************************/
 
-#include <pdi/testing.h>
 #include <mpi.h>
+#include <pdi/testing.h>
 
 using testing::Eq;
 using testing::HasSubstr;
@@ -42,7 +42,8 @@ data:
   veloc_file_buf: {type: array, subtype: char, size: 256}
 plugins:
   veloc:
-    config_file: )==") + VELOC_CONFIG_FILE + R"==(
+    config_file: )==") + VELOC_CONFIG_FILE
+	                         + R"==(
     checkpoint_label: test_0
     iteration: ii
     custom_checkpointing:
@@ -57,7 +58,8 @@ plugins:
            start_on_event: start_rec
            route_file_on_event: route_rec
            end_on_event: end_rec
-)==").c_str()));
+)==")
+	                            .c_str()));
 
 	FinalizePdi();
 	MPI_Finalize();
@@ -115,7 +117,7 @@ plugins:
 
 TEST_F(VelocYamlConfig, IterationNotInProtectData)
 {
-	EXPECT_CALL(*this, PdiError(Eq(PDI_ERR_CONFIG), HasSubstr("is not included in `protect_data'")));
+	EXPECT_CALL(*this, PdiError(Eq(PDI_ERR_CONFIG), HasSubstr("is not included in 'protected_data'")));
 
 	InitPdi(PC_parse_string(R"==(
 metadata:
@@ -135,7 +137,7 @@ plugins:
 
 TEST_F(VelocYamlConfig, MissingProtectData)
 {
-	EXPECT_CALL(*this, PdiError(Eq(PDI_ERR_CONFIG), HasSubstr("'protect_data' is undefined")));
+	EXPECT_CALL(*this, PdiError(Eq(PDI_ERR_CONFIG), HasSubstr("'protected_data' is undefined")));
 
 	InitPdi(PC_parse_string(R"==(
 metadata:
@@ -352,10 +354,7 @@ plugins:
 
 TEST_F(VelocYamlConfig, DuplicateEvents)
 {
-	EXPECT_CALL(
-		*this,
-		PdiError(Eq(PDI_ERR_CONFIG), HasSubstr("Duplicate event name"))
-	);
+	EXPECT_CALL(*this, PdiError(Eq(PDI_ERR_CONFIG), HasSubstr("Duplicate event name")));
 
 	InitPdi(PC_parse_string(R"==(
 metadata:

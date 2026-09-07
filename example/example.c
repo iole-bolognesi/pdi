@@ -202,15 +202,14 @@ int main(int argc, char* argv[])
 	double duration;
 	PC_double(PC_get(conf, ".duration"), &duration);
 
-	PC_errhandler_t old_handler = PC_errhandler(PC_NULL_HANDLER); 
+	PC_errhandler_t old_handler = PC_errhandler(PC_NULL_HANDLER);
 	PC_tree_t status_tree = PC_get(conf, ".veloc_checkpoint_status");
-	PC_errhandler(old_handler);  
+	PC_errhandler(old_handler);
 
 	if (!PC_status(status_tree)) {
 		PC_int(status_tree, &veloc_checkpoint_status);
-	} 
-	else{
-		veloc_checkpoint_status = 1; 
+	} else {
+		veloc_checkpoint_status = 1;
 	}
 
 #else
@@ -222,7 +221,7 @@ int main(int argc, char* argv[])
 	psize[1] = psize_1d;
 
 	double duration = 0.1;
-	veloc_checkpoint_status = 1; 
+	veloc_checkpoint_status = 1;
 #endif
 
 	// get local & add ghosts to sizes
@@ -251,7 +250,7 @@ int main(int argc, char* argv[])
 	init(dsize, pcoord, cur);
 
 	double elapsed_offset = 0.0;
-	int first_iter=1;
+	int first_iter = 1;
 
 	PDI_expose("veloc_checkpoint_status", &veloc_checkpoint_status, PDI_OUT);
 
@@ -263,10 +262,10 @@ int main(int argc, char* argv[])
 		elapsed_offset = MPI_Wtime() - start;
 
 		PDI_multi_expose("newiter", "iter", &ii, PDI_INOUT, "main_field", cur, PDI_INOUT, "elapsed_offset", &elapsed_offset, PDI_INOUT, NULL);
-		
+
 		if (first_iter) {
 			start = MPI_Wtime() - elapsed_offset;
-			first_iter=0; 
+			first_iter = 0;
 		}
 
 		iter(dsize, cur, next);

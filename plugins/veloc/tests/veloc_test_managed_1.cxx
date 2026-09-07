@@ -45,14 +45,13 @@ plugins:
       checkpoint_on_event : ckp
       recover_on_event: recover
 )";
-	  
 
 int main(int argc, char* argv[])
 {
 	MPI_Init(&argc, &argv);
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	
+
 	PC_tree_t conf = PC_parse_string(CONF_YAML);
 	PDI_init(conf);
 
@@ -64,7 +63,7 @@ int main(int argc, char* argv[])
 
 	/* Checkpoint Part */
 
-	// read default status 
+	// read default status
 	PDI_expose("cp_status", &cp_status, PDI_IN);
 
 	if (cp_status != 1) {
@@ -77,7 +76,7 @@ int main(int argc, char* argv[])
 		var = var + 1, PDI_multi_expose("ckp", "ii", &ii, PDI_INOUT, "var", &var, PDI_INOUT, NULL);
 	}
 
-	// read checkpoint counter 
+	// read checkpoint counter
 	PDI_expose("cp_counter", &cp_counter, PDI_IN);
 
 	if (cp_counter != 2) {
@@ -88,12 +87,11 @@ int main(int argc, char* argv[])
 	/* Recovery Part */
 
 	cp_status = 0;
-	// write status to "recovery needed"
 	PDI_expose("cp_status", &cp_status, PDI_OUT);
-	
+
 	ii = -1;
 	var = -1;
-	// recover latest checkpoint 
+	// recover latest checkpoint
 	PDI_multi_expose("recover", "ii", &ii, PDI_INOUT, "var", &var, PDI_INOUT, NULL);
 
 	PDI_expose("cp_status", &cp_status, PDI_IN);
@@ -113,7 +111,7 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	if(rank == 0){
+	if (rank == 0) {
 		printf("veloc_test_managed_1 PASSED\n");
 	}
 

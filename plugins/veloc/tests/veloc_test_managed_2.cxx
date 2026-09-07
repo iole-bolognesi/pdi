@@ -30,13 +30,11 @@ constexpr char CONF_YAML[] = R"(
 metadata: 
   ii: int
 data:
-  cp_status: int
   cp_counter: int
   var: int
 plugins:
   veloc:
     config_file: veloc_config.cfg
-    status: cp_status
     counter: cp_counter
     checkpoint_label: managed_test_series
     iteration: ii
@@ -45,7 +43,6 @@ plugins:
       recover_on_event: recover
       recover_from_iteration : 0 
 )";
-	  
 
 int main(int argc, char* argv[])
 {
@@ -56,10 +53,6 @@ int main(int argc, char* argv[])
 	PC_tree_t conf = PC_parse_string(CONF_YAML);
 	PDI_init(conf);
 
-	int cp_status = 0 ;
-	// write status to "recovery needed"
-	PDI_expose("cp_status", &cp_status, PDI_OUT);
- 
 	int rec_ii = -1;
 	int rec_var = -1;
 	// recover the second to last checkpoint
@@ -75,7 +68,7 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	if(rank == 0){
+	if (rank == 0) {
 		printf("veloc_test_managed_2 PASSED\n");
 	}
 

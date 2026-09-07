@@ -46,7 +46,6 @@ plugins:
       synchronize_on_event : sync
       when: '$ii % 2 = 0 '
 )";
-	  
 
 int main(int argc, char* argv[])
 {
@@ -62,39 +61,39 @@ int main(int argc, char* argv[])
 
 	int ii = 0;
 	int arr_size = 20;
-	
+
 	PDI_expose("arr_size", &arr_size, PDI_OUT);
 
 	double* arr = new double[arr_size];
-	for (int i = 0; i < arr_size; i++){
+	for (int i = 0; i < arr_size; i++) {
 		arr[i] = 0.0;
 	}
 
-	// write checkpoints 
-	for (; ii < 5; ++ii) {	
+	// write checkpoints
+	for (; ii < 5; ++ii) {
 		arr[ii] = ii * 2;
 		PDI_multi_expose("sync", "ii", &ii, PDI_INOUT, "arr", arr, PDI_INOUT, NULL);
 	}
 
-	cp_status = 0; 
+	cp_status = 0;
 	// write status to "recovery needed"
 	PDI_expose("cp_status", &cp_status, PDI_OUT);
 
-	// recover and keep writing checkpoints 
-	for (; ii < 10 ; ++ii) {	
+	// recover and keep writing checkpoints
+	for (ii = 0; ii < 10; ++ii) {
 		arr[ii] = ii * 2;
 		PDI_multi_expose("sync", "ii", &ii, PDI_INOUT, "arr", arr, PDI_INOUT, NULL);
 	}
 
-	// read checkpoint counter 
+	// read checkpoint counter
 	PDI_expose("cp_counter", &cp_counter, PDI_IN);
 
 	if (cp_counter != 5) {
-			fprintf(stderr, "Rank %d veloc_test_managed_3:: counter value  %d does not match expected value %d\n", rank, cp_counter, 5);
-			exit(1);
+		fprintf(stderr, "Rank %d veloc_test_managed_3:: counter value  %d does not match expected value %d\n", rank, cp_counter, 5);
+		exit(1);
 	}
 
-	if(rank == 0){
+	if (rank == 0) {
 		printf("veloc_test_managed_3 PASSED\n");
 	}
 

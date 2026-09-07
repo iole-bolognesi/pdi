@@ -23,25 +23,25 @@
  ******************************************************************************/
 
 #include <pdi/context.h>
+#include <pdi/error.h>
 #include <pdi/expression.h>
 #include <pdi/plugin.h>
 #include <pdi/ref_any.h>
-#include <pdi/error.h>
 
 #include "veloc_cfg.h"
 #include "veloc_wrapper.h"
 
 using PDI::Context;
 using PDI::Datatype_sptr;
-using PDI::Spectree_error;
 using PDI::Impl_error;
-using PDI::Type_error;
-using PDI::Value_error;
 using PDI::Plugin;
 using PDI::Ref;
 using PDI::Ref_r;
 using PDI::Ref_w;
+using PDI::Spectree_error;
 using PDI::to_long;
+using PDI::Type_error;
+using PDI::Value_error;
 
 // Same logic as in scalar_datatype.cxx
 namespace {
@@ -64,7 +64,7 @@ class veloc_plugin: public Plugin
 	int m_recovered_iter;
 	int m_status;
 	int m_cp_counter;
-	int m_partial_counter; 
+	int m_partial_counter;
 
 	template <typename RefType>
 	void protect_all()
@@ -85,14 +85,12 @@ class veloc_plugin: public Plugin
 			if (ref) {
 				const Datatype_sptr type = ref.type();
 				size_t n_elements = 1;
-				size_t total_bytes = type->datasize(); 
+				size_t total_bytes = type->datasize();
 
-				if (!type->dense()) { 
-					throw Impl_error{
-						fmt::format("Sparse types are not supported (`{}`)", data.second)
-					};
+				if (!type->dense()) {
+					throw Impl_error{fmt::format("Sparse types are not supported (`{}`)", data.second)};
 				}
-				
+
 				if (auto* array_type = dynamic_cast<const PDI::Array_datatype*>(type.get())) {
 					n_elements = array_type->subsize();
 				}
@@ -116,8 +114,9 @@ public:
 		: Plugin(ctx)
 		, m_config{ctx, config}
 		, m_cp_counter{0}
-		, m_recovered_iter{-1},
-		m_status{1} // by default, m_status = 1 => recovery is not needed, app only wants to checkpoint 
+		, m_partial_counter{0}
+		, m_recovered_iter{-1}
+		, m_status{1} // by default, m_status = 1 => recovery is not needed, app only wants to checkpoint
 	{
 		init(context(), MPI_COMM_WORLD, m_config.config());
 
@@ -125,17 +124,16 @@ public:
 			if (desc.second == Desc_type::STATUS) {
 				context().callbacks().add_data_callback(
 					[this](const std::string&, Ref ref) {
-						// if app wants to read the status, therefore plugin writes it 
+						// if app wants to read the status, therefore plugin writes it
 						if (Ref_w w_ref = ref) {
 							*static_cast<int*>(w_ref.get()) = m_status;
 						}
-						// if app wants to write the status, therefore plugin reads it 
-						else if (Ref_r r_ref = ref) {
+						// if app wants to write the status, therefore plugin reads it
+						else if (Ref_r r_ref = ref)
+						{
 							int status_value = *static_cast<const int*>(r_ref.get());
-							if(status_value !=0 && status_value != 1){
-								throw Value_error{
-									fmt::format("Invalid status value: {} (expected 0 or 1)", status_value)
-								};
+							if (status_value != 0 && status_value != 1) {
+								throw Value_error{fmt::format("Invalid status value: {} (expected 0 or 1)", status_value)};
 							}
 							m_status = status_value;
 						}
@@ -222,7 +220,7 @@ public:
 						Ref_r new_iter_r = context().desc(m_config.iter_name()).ref();
 						auto new_iter = new_iter_r.scalar_value<int>();
 						init_checkpoint(context(), m_config.label(), new_iter);
-						m_partial_counter++; 
+						m_partial_counter++;
 					},
 					event.first
 				);
@@ -263,19 +261,26 @@ public:
 				);
 			} break;
 			case Event_type::END_CHECKPOINT: {
-				context().callbacks().add_event_callback([this](const std::string& event_name) { 
-					PDI::TimerEventHandler veloc_timer(context(), "veloc");
-					end_checkpoint(context()); 
-					if(m_partial_counter==1){
-						m_cp_counter++;
-						m_partial_counter--;
-					}
-				}, event.first);
+				context().callbacks().add_event_callback(
+					[this](const std::string& event_name) {
+						PDI::TimerEventHandler veloc_timer(context(), "veloc");
+						end_checkpoint(context());
+						if (m_partial_counter == 1) {
+							m_cp_counter++;
+							m_partial_counter--;
+						}
+					},
+					event.first
+				);
 			} break;
 			case Event_type::END_RECOVERY: {
-				context().callbacks().add_event_callback([this](const std::string& event_name) { 
-					PDI::TimerEventHandler veloc_timer(context(), "veloc");
-					end_restart(context()); }, event.first);
+				context().callbacks().add_event_callback(
+					[this](const std::string& event_name) {
+						PDI::TimerEventHandler veloc_timer(context(), "veloc");
+						end_restart(context());
+					},
+					event.first
+				);
 			} break;
 			default:
 				throw Type_error{"Unexpected event type"};
