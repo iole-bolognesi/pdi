@@ -24,97 +24,99 @@
 
 #include "veloc_wrapper.h"
 
+using PDI::Invalid_action_error;
+using PDI::System_error;
+
 void init(PDI::Context& ctx, MPI_Comm comm, const std::string veloc_file)
 {
 	if (VELOC_Init(comm, veloc_file.c_str()) != VELOC_SUCCESS) {
-		ctx.logger().error("Error initializing VELOC. Aborting.");
-		exit(2);
+		throw System_error{"Failure during VeloC initialization"};
 	}
 }
 
-void protect_data(PDI::Context& ctx, int id, const void* ptr, size_t n_elements, size_t element_bytes)
+void protect_data(PDI::Context& ctx, int id, const void* ptr, size_t n_elements, size_t element_bytes, std::string name)
 {
 	if (VELOC_Mem_protect(id, const_cast<void*>(ptr), n_elements, element_bytes) != VELOC_SUCCESS) {
-		ctx.logger().error("Memory protect failed for id {} with ptr = {} and size = {}", id, ptr, (n_elements * element_bytes));
-		exit(2);
+		throw System_error{"Memory protect failed for data {} with ptr = {} and size = {}", name, ptr, (n_elements * element_bytes)};
 	}
 }
 
-void unprotect_data(PDI::Context& ctx, int id)
+void unprotect_data(PDI::Context& ctx, int id, std::string name)
 {
 	if (VELOC_Mem_unprotect(id) != VELOC_SUCCESS) {
-		ctx.logger().error("Memory unprotect failed for id {}", id);
-		exit(2);
+		throw System_error{"Memory unprotect failed for data {}", name};
 	}
 }
 
 void write_checkpoint(PDI::Context& ctx, const std::string label, int version)
 {
 	if (VELOC_Checkpoint(label.c_str(), version) != VELOC_SUCCESS) {
-		ctx.logger().error("Error during checkpointing. Aborting.");
-		exit(2);
+		throw System_error{"Error during checkpointing"};
 	}
 }
 
 int read_checkpoint(PDI::Context& ctx, const std::string label, int version)
 {
-	int target = (version >= 0) ? version : VELOC_Restart_test(label.c_str(), 0);
-	if (target >= 0) {
+	int target = 0;
+
+	if (version != 0) {
+		target = VELOC_Restart_test(label.c_str(), version > 0 ? version : 0);
+	}
+
+	if (target < 0) {
+		throw Invalid_action_error{"No previous checkpoint found for restarting"};
+	} else {
 		ctx.logger().info("Previous checkpoint found at iteration {}. Initiating restart...", target);
 		if (VELOC_Restart(label.c_str(), target) != VELOC_SUCCESS) {
-			ctx.logger().error("Error during restart. Aborting.");
-			exit(2);
+			throw System_error{"Error during restarting"};
 		}
-	} else {
-		ctx.logger().error("No previous checkpoint found for restarting");
-		exit(2);
 	}
 	return target;
 }
 
 void init_restart(PDI::Context& ctx, const std::string label, int version)
 {
-	int target = (version >= 0) ? version : VELOC_Restart_test(label.c_str(), 0);
-	if (target >= 0) {
+	int target = 0;
+
+	if (version != 0) {
+		target = VELOC_Restart_test(label.c_str(), version > 0 ? version : 0);
+	}
+
+	if (target < 0) {
+		throw Invalid_action_error{"No previous checkpoint found for restarting"};
+	} else {
 		ctx.logger().info("Previous checkpoint found at iteration {}. Initiating restart...", target);
 		if (VELOC_Restart_begin(label.c_str(), target) != VELOC_SUCCESS) {
-			ctx.logger().error("Error when initiating the restart phase.");
+			throw System_error{"Error when initiating the restart phase"};
 		}
-	} else {
-		ctx.logger().error("No previous checkpoint found for restarting");
-		exit(2);
 	}
 }
 
 void end_restart(PDI::Context& ctx)
 {
 	if (VELOC_Restart_end(1) != VELOC_SUCCESS) {
-		ctx.logger().error("Error when ending restart phase. Restart failed.");
-		exit(2);
+		throw System_error{"Error when finalizing the restart phase"};
 	}
 }
 
 void init_checkpoint(PDI::Context& ctx, const std::string label, int version)
 {
 	if (VELOC_Checkpoint_begin(label.c_str(), version) != VELOC_SUCCESS) {
-		ctx.logger().error("Error when initiating the checkpoint phase.");
-		exit(2);
+		throw System_error{"Error when initiating the checkpoint phase"};
 	}
 }
 
 void end_checkpoint(PDI::Context& ctx)
 {
 	if (VELOC_Checkpoint_end(1) != VELOC_SUCCESS) {
-		ctx.logger().error("Error when finalizing the checkpoint phase.");
-		exit(2);
+		throw System_error{"Error when finalizing the checkpoint phase"};
 	}
 }
 
 void route_file(PDI::Context& ctx, const std::string& input_filename, char* output_filename)
 {
 	if (VELOC_Route_file(input_filename.c_str(), output_filename) != VELOC_SUCCESS) {
-		ctx.logger().error("Error when routing file.");
-		exit(2);
+		throw System_error{"Error when routing file"};
 	} else {
 		ctx.logger().info("File routed successfully from {} to {}", input_filename, output_filename);
 	}
@@ -123,7 +125,6 @@ void route_file(PDI::Context& ctx, const std::string& input_filename, char* outp
 void finalize(PDI::Context& ctx)
 {
 	if (VELOC_Finalize(1) != VELOC_SUCCESS) {
-		ctx.logger().error("Error finalizing VELOC. Aborting.");
-		exit(2);
+		throw System_error{"Error finalizing VeloC"};
 	}
 }

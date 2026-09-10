@@ -95,14 +95,14 @@ The user can define a *managed_checkpointing* tree or a *custom_checkpointing* t
 
 *managed_checkpointing* accepts the following optional mapping
 
-  * *recover_from_iteration* : The iteration from which the user wants to restore. For example, if the user sets this key to 20, the plugin will restore the checkpoint written at iteration 20. If this key is undefined, the plugin will restore the checkpoint from the latest iteration for which a checkpoint was written. 
+  * *recover_at_or_before_iteration* : The maximum iteration from which the user wants to restart. For example, if this key is set to 20, the plugin will restore the checkpoint written at iteration 20, if available. Otherwise, it will restore the most recent available checkpoint from a preceding iteration. If this key is undefined, the plugin will restore the checkpoint from the latest iteration for which a checkpoint was written. 
 
 ```yml
 managed_checkpointing:
         protected_data: [iter, main_field,elapsed_offset] # data to be checkpointed/recovered, iter must be included
         synchronize_on_event: newiter # name of PDI_event where to check the status and consequently checkpoint/recover  
         when : '$iter % 1000 = 0' 
-        recover_from_iteration : 3000
+        recover_at_or_before_iteration : 3000
 ```
 
 #### Custom Checkpointing
@@ -129,7 +129,7 @@ managed_checkpointing:
 
    *custom_recover* accepts the following optional mapping
 
-   * *recover_from_iteration* : The iteration from which the user wants to restore. For example, if the user sets this key to 20, the plugin will restore the checkpoint written at iteration 20.
+   * *recover_at_or_before_iteration* : The maximum iteration from which the user wants to restart. For example, if this key is set to 20, the plugin will restore the checkpoint written at iteration 20, if available. Otherwise, it will restore the most recent available checkpoint from a preceding iteration. If this key is undefined, the plugin will restore the checkpoint from the latest iteration for which a checkpoint was written. 
 
 
   All recovery logic must be placed by the user after the "route_file_on_event" event and before the "end_on_event" event. 
@@ -147,7 +147,7 @@ custom_checkpointing:
     start_on_event: start
     route_file_on_event: route
     end_on_event: end
-    recover_from_iteration : 20
+    recover_at_or_before_iteration : 20
 ```
     
 ## Use Case to Avoid 

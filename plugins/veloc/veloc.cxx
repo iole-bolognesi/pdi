@@ -70,14 +70,13 @@ class veloc_plugin: public Plugin
 	void protect_all()
 	{
 		for (auto&& data: m_config.managed().protected_data) {
-			RefType ref = context().desc(data.second).ref();
+			RefType ref = context().desc(data.first).ref();
 
 			if (nulltype(ref.type())) {
 				throw Spectree_error{
 					m_config.tree(),
-					"VELOC PLUGIN YAML: Protected data `{}' (id: `{}') has no valid type, "
+					"VELOC PLUGIN YAML: Protected data '{}' has no valid type, "
 					"check that the name in protect_data matches the data/metadata section",
-					data.second,
 					data.first
 				};
 			}
@@ -97,7 +96,7 @@ class veloc_plugin: public Plugin
 
 				size_t element_bytes = total_bytes / n_elements;
 
-				protect_data(context(), data.first, ref.get(), n_elements, element_bytes);
+				protect_data(context(), data.second, ref.get(), n_elements, element_bytes, data.first);
 			}
 		}
 	}
@@ -105,7 +104,7 @@ class veloc_plugin: public Plugin
 	void unprotect_all()
 	{
 		for (auto&& data: m_config.managed().protected_data) {
-			unprotect_data(context(), data.first);
+			unprotect_data(context(), data.second, data.first);
 		}
 	}
 

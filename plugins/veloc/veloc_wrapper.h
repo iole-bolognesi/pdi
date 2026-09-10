@@ -51,7 +51,7 @@ void init(PDI::Context& ctx, MPI_Comm comm, std::string veloc_file);
  * @param n_elements number of elements in the data structure 
  * @param element_bytes size in bytes of each element 
  */
-void protect_data(PDI::Context& ctx, int id, const void* ptr, size_t n_elements, size_t element_bytes);
+void protect_data(PDI::Context& ctx, int id, const void* ptr, size_t n_elements, size_t element_bytes, std::string name);
 
 /**
  * @brief de-registers a data structure to stop tracking it for checkpoint/restart. 
@@ -59,7 +59,7 @@ void protect_data(PDI::Context& ctx, int id, const void* ptr, size_t n_elements,
  * @param ctx the context from which to access the logger 
  * @param id the identifier of the data to de-register 
  */
-void unprotect_data(PDI::Context& ctx, int id);
+void unprotect_data(PDI::Context& ctx, int id, std::string name);
 
 /**
  * @brief writes a checkpoint using VeloC memory based API

@@ -182,7 +182,7 @@ plugins:
         end_on_event: c_end
       custom_recover:
         filename: file1.h5
-        recover_from_iteration: 1
+        recover_at_or_before_iteration: 1
         start_on_event: r_start
         route_file_on_event: r_route
         end_on_event: r_end

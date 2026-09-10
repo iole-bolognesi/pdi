@@ -91,7 +91,7 @@ struct CustomCheckpointingCfg {
  */
 struct ManagedCheckpointingCfg {
 	bool is_valid = false;
-	std::unordered_map<int, std::string> protected_data;
+	std::unordered_map<std::string, int> protected_data;
 	PDI::Expression when = 1L;
 	int requested_checkpoint = -1;
 };

@@ -193,7 +193,7 @@ bool validate_managed_config(
 
 	// iteration must be included in protect_data
 	bool iter_protected
-		= std::any_of(cfg.protected_data.begin(), cfg.protected_data.end(), [&iter_name](const auto& data) { return data.second == iter_name; });
+		= std::any_of(cfg.protected_data.begin(), cfg.protected_data.end(), [&iter_name](const auto& data) { return data.first == iter_name; });
 	if (!iter_protected) {
 		throw Spectree_error{
 			tree,
@@ -231,10 +231,10 @@ bool validate_managed_config(
 		}
 	}
 
-	// Warn : "recover_from_iteration" defined without recovery events
+	// Warn : "recover_at_or_before_iteration" defined without recovery events
 	if (!rec_events_defined && cfg.requested_checkpoint != -1) {
 		ctx.logger().warn("No recovery events have been defined "
-		                  "in 'managed_checkpointing'. Ignoring 'recover_from_iteration' key");
+		                  "in 'managed_checkpointing'. Ignoring 'recover_at_or_before_iteration' key");
 	}
 
 	return true;
@@ -284,8 +284,8 @@ Veloc_cfg::Veloc_cfg(Context& ctx, PC_tree_t tree)
 					int data_id = 0;
 					each(value, [&](PC_tree_t item) {
 						std::string data_name = to_string(item);
-						if (!m_managed.protected_data.emplace(data_id, data_name).second) {
-							ctx.logger().warn("Duplicate data id (`{}')", data_id);
+						if (!m_managed.protected_data.emplace(data_name, data_id).second) {
+							ctx.logger().warn("Duplicate data ('{}') in 'protected_data'", data_name);
 						}
 						data_id++;
 					});
@@ -298,7 +298,7 @@ Veloc_cfg::Veloc_cfg(Context& ctx, PC_tree_t tree)
 				load_events(m_events, ctx, value, Event_type::STATE_SYNC);
 			} else if (key == "when") {
 				m_managed.when = to_string(value);
-			} else if (key == "recover_from_iteration") {
+			} else if (key == "recover_at_or_before_iteration") {
 				m_managed.requested_checkpoint = to_long(value);
 			} else {
 				throw Spectree_error{tree, "VeloC config: unknown key `{}' in `managed_checkpointing', ignoring.", key};
@@ -358,7 +358,7 @@ Veloc_cfg::Veloc_cfg(Context& ctx, PC_tree_t tree)
 					load_events(m_events, ctx, value, Event_type::END_RECOVERY);
 				} else if (key == "route_file_on_event") {
 					load_events(m_events, ctx, value, Event_type::ROUTE_FILE_FOR_REC);
-				} else if (key == "recover_from_iteration") {
+				} else if (key == "recover_at_or_before_iteration") {
 					m_custom.manual_rec.requested_checkpoint = to_long(value);
 				} else {
 					throw Spectree_error{custom_cp_tree, "VeloC config: unknown key `{}' in `custom_recover', ignoring.", key};

@@ -41,7 +41,7 @@ plugins:
     managed_checkpointing:
       protect_data: [ii, var]
       recover_on_event: recover
-      recover_from_iteration : 0 
+      recover_at_or_before_iteration :  0
 )";
 
 int main(int argc, char* argv[])
