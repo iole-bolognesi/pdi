@@ -87,7 +87,7 @@ class veloc_plugin: public Plugin
 				size_t total_bytes = type->datasize();
 
 				if (!type->dense()) {
-					throw Impl_error{fmt::format("Sparse types are not supported (`{}`)", data.second)};
+					throw Impl_error{fmt::format("Sparse types are not supported: the data '{}' is sparse", data.first)};
 				}
 
 				if (auto* array_type = dynamic_cast<const PDI::Array_datatype*>(type.get())) {
