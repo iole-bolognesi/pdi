@@ -34,6 +34,22 @@ set(RUNTEST_DIR "${CMAKE_CURRENT_LIST_DIR}/../cmake/runtest-dir")
 set(VELOC_CONFIG_FILE_NAME "veloc_config.cfg")
 set(VELOC_TEST_NPROC 3)
 
+# Locate veloc-backend 
+find_program(VELOC_BACKEND_EXECUTABLE veloc-backend
+    HINTS
+        "${veloc_DIR}/../../../bin"
+)
+set(VELOC_ASYNC_ENV_MOD "")
+if(VELOC_BACKEND_EXECUTABLE)
+    get_filename_component(VELOC_BACKEND_DIR "${VELOC_BACKEND_EXECUTABLE}" DIRECTORY)
+    message(STATUS "veloc-backend found: ${VELOC_BACKEND_EXECUTABLE}")
+    set(VELOC_ASYNC_ENV_MOD
+        "PATH=path_list_prepend:${VELOC_BACKEND_DIR}"
+        "LD_LIBRARY_PATH=path_list_prepend:$<TARGET_FILE_DIR:veloc::modules>")
+else()
+    message(WARNING "veloc-backend not found: tests using async mode will fail.")
+endif()
+
 # Add the plugin path to PDI_PLUGIN_PATH
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY TEST_INCLUDE_FILE "${CMAKE_CURRENT_BINARY_DIR}/TestPath.cmake")
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TestPath.cmake"
@@ -76,6 +92,7 @@ gtest_discover_tests(veloc_test_yaml_syntax
     TEST_PREFIX veloc_test_yaml_syntax.
     PROPERTIES
         TIMEOUT 15
+        ${VELOC_ASYNC_ENV_MOD}
 )
 
 # Erases checkpoints from previous ctest runs
@@ -97,6 +114,7 @@ set_property(TEST veloc_test_managed_1 PROPERTY TIMEOUT 15)
 set_property(TEST veloc_test_managed_1 PROPERTY PROCESSORS ${VELOC_TEST_NPROC})
 set_property(TEST veloc_test_managed_1 PROPERTY FIXTURES_REQUIRED managed_prepare)
 set_property(TEST veloc_test_managed_1 PROPERTY FIXTURES_SETUP managed_ckpt)
+set_tests_properties(veloc_test_managed_1 PROPERTIES ${VELOC_ASYNC_ENV_MOD})
 
 # veloc_test_managed_2
 add_executable(veloc_test_managed_2 veloc_test_managed_2.cxx)
@@ -108,6 +126,7 @@ set_property(TEST veloc_test_managed_2 PROPERTY WORKING_DIRECTORY "${VELOC_TEST_
 set_property(TEST veloc_test_managed_2 PROPERTY TIMEOUT 15)
 set_property(TEST veloc_test_managed_2 PROPERTY PROCESSORS ${VELOC_TEST_NPROC})
 set_property(TEST veloc_test_managed_2 PROPERTY FIXTURES_REQUIRED managed_ckpt)
+set_tests_properties(veloc_test_managed_2 PROPERTIES ${VELOC_ASYNC_ENV_MOD})
 
 add_test(NAME veloc_managed_cleanup
     COMMAND "${CMAKE_COMMAND}" -E rm -rf
@@ -126,6 +145,7 @@ add_test(NAME veloc_test_managed_3
         "$<TARGET_FILE:veloc_test_managed_3>" ${MPIEXEC_POSTFLAGS})
 set_property(TEST veloc_test_managed_3 PROPERTY TIMEOUT 15)
 set_property(TEST veloc_test_managed_3 PROPERTY PROCESSORS ${VELOC_TEST_NPROC})
+set_tests_properties(veloc_test_managed_3 PROPERTIES ${VELOC_ASYNC_ENV_MOD})
 
 if(HDF5_FOUND)
 # veloc_test_custom
@@ -138,5 +158,6 @@ gtest_discover_tests(veloc_test_custom
     TEST_PREFIX veloc_test_custom.
     PROPERTIES
         TIMEOUT 15
+        ${VELOC_ASYNC_ENV_MOD}
 )
 endif()
